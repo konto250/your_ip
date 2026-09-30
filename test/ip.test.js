@@ -13,11 +13,11 @@ function request(method, headers = {}) {
   return result;
 }
 
-test('GET returns only the IPv4 or IPv6 address and disables caching', () => {
+test('GET returns only the IPv4 or IPv6 address followed by a newline', () => {
   for (const ip of ['203.0.113.10', '2001:db8::10']) {
     const result = request('GET', { 'x-forwarded-for': ip });
     assert.equal(result.statusCode, 200);
-    assert.equal(result.body, ip);
+    assert.equal(result.body, `${ip}\n`);
     assert.equal(result.headers['Content-Type'], 'text/plain; charset=utf-8');
     assert.equal(result.headers['Cache-Control'], 'no-store');
   }

@@ -16,5 +16,5 @@ module.exports = function handler(request, response) {
     return response.status(503).end();
   }
 
-  return response.status(200).end(request.method === 'HEAD' ? undefined : ip);
+  return response.status(200).end(request.method === 'HEAD' ? undefined : `${ip}\n`);
 };

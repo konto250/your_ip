@@ -1,5 +1,6 @@
 const assert = require('node:assert/strict');
 const test = require('node:test');
+const vm = require('node:vm');
 const handler = require('../api/root');
 
 function request(method, accept) {
@@ -19,7 +20,30 @@ test('browser gets styled HTML instructions', () => {
   assert.equal(result.headers['Content-Type'], 'text/html; charset=utf-8');
   assert.match(result.body, /<style>/);
   assert.match(result.body, /href="\/api\/ip"/);
+  assert.match(result.body, /aria-label="コマンドをコピー"/);
   assert.equal(result.headers.Vary, 'Accept');
+});
+
+test('copy icon copies the displayed command in one click', async () => {
+  const html = request('GET', 'text/html').body;
+  const script = html.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script);
+
+  let onClick;
+  let copied;
+  const status = { textContent: '' };
+  const elements = {
+    'copy-command': { addEventListener(event, callback) { assert.equal(event, 'click'); onClick = callback; } },
+    'copy-status': status,
+    command: { textContent: 'curl https://yourip-delta.vercel.app/api/ip' },
+  };
+  vm.runInNewContext(script, {
+    document: { getElementById(id) { return elements[id]; } },
+    navigator: { clipboard: { async writeText(text) { copied = text; } } },
+  });
+  await onClick();
+  assert.equal(copied, elements.command.textContent);
+  assert.equal(status.textContent, 'コピーしました');
 });
 
 test('curl gets concise text instructions', () => {
